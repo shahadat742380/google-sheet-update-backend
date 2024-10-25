@@ -1,0 +1,40 @@
+service: sheet-update
+frameworkVersion: "3"
+
+provider:
+  name: aws
+  runtime: nodejs20.x
+  region: ap-south-1
+  memorySize: 256
+  stage: prod # OLD API have 'dev'
+  timeout: 30 # repository wide Lambda timeout
+  environment:
+    NODE_ENV: production
+    DATABASE_URL: postgres://0192bee6-f337-74c7-8dd1-a324742fbc7a:81a1840b-b0ef-404c-a598-689677d24e14@us-west-2.db.thenile.dev:5432/sheet_update_test_app
+
+plugins:
+  - serverless-esbuild # used for compiling/packaging the Typescript code
+  - serverless-offline # used for local execution
+
+custom:
+  esbuild:
+    bundle: true
+    minify: false
+    sourcemap: true
+    target: "node20" # Node.js version must match your runtime
+    define: { "require.resolve": "undefined" }
+    platform: "node"
+    concurrency: 10
+
+functions:
+  app:
+    handler: src/index.handler
+    events:
+      - http:
+          path: /
+          method: ANY
+          cors: true
+      - http:
+          path: /{proxy+}
+          method: ANY
+          cors: true
